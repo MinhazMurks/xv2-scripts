@@ -19,6 +19,7 @@ slot_placement_dict = {
 
 slot_entry_set = set()
 write_slots_list = []
+dupe_list = []
 
 
 class SlotEntry:
@@ -52,7 +53,7 @@ class SlotEntry:
         return False
 
     def __repr__(self):
-        return f'[{self.char_code}: {self.costume_index}, {self.model_preset}, {self.unlock_index}]'
+        return f'[{self.char_code},{self.costume_index},{self.model_preset},{self.unlock_index},{self.flag_gk2},{self.voice_id_1},{self.voice_id_2},{self.dlc_val_1},{self.dlc_val_2}]'
 
     def __hash__(self):
         return hash((self.char_code, self.costume_index, self.model_preset, self.unlock_index))
@@ -108,7 +109,7 @@ def read_slot_entries(file_reader):
             slot_entry = read_slot_entry(file_reader)
 
             if slot_entry in slot_entry_set:
-                print(f'DUPE: {slot_entry}')
+                dupe_list.append(slot_entry.write_string())
 
             if slot_entry not in slot_entry_set:
                 slot_entry_set.add(slot_entry)
@@ -138,6 +139,11 @@ def remove_duplicates():
                 slot = read_slot_entries(file)
                 if not slot.is_empty():
                     write_slots_list.append(slot)
+
+
+def show_results():
+    dupes = ''.join(dupe_list)
+    print(f'Found {len(dupe_list)} duplicates: {dupes}')
 
 
 if __name__ == '__main__':
