@@ -142,10 +142,18 @@ def remove_duplicates():
 
 
 def show_results():
-    dupes = ''.join(dupe_list)
-    print(f'Found {len(dupe_list)} duplicates: {dupes}')
+    print(f'Found {len(dupe_list)} duplicates:')
+    for dupe in dupe_list:
+        print(dupe)
+
+    print()
+
+    print('All Slots: ')
+    for slot in write_slots_list:
+        print(slot.write_string())
 
 
 if __name__ == '__main__':
     remove_duplicates()
     write_new_file()
+    show_results()
