@@ -1,9 +1,10 @@
 import datetime
+import os.path
 import time
 import shutil
-
-char_slot_directory = 'A:\\SteamLibrary\\steamapps\\common\\DB Xenoverse 2\\data'
-char_slot_file = 'A:\\SteamLibrary\\steamapps\\common\\DB Xenoverse 2\\data\\XV2P_SLOTS.x2s'
+from common import char_slot_file, char_slot_backup_directory, installed_char_id_list, base_char_id_list, \
+    empty_char_list, get_datetime
+from remove_empty_entries import populate_installed_chars
 
 slot_placement_dict = {
     'character_code': 0,
@@ -96,7 +97,7 @@ def read_slot_entry(file_reader):
         char_list.append(char)
 
 
-def read_slot_entries(file_reader):
+def read_slot_entries(file_reader, remove_empties):
     current_slot = Slot()
     while True:
         char = file_reader.read(1)
@@ -110,25 +111,29 @@ def read_slot_entries(file_reader):
 
             if slot_entry in slot_entry_set:
                 dupe_list.append(slot_entry.write_string())
-
-            if slot_entry not in slot_entry_set:
-                slot_entry_set.add(slot_entry)
-                current_slot.add_slot_entry(slot_entry)
+            else:
+                if slot_entry.char_code not in base_char_id_list and slot_entry.char_code not in installed_char_id_list:
+                    empty_char_list.append(slot_entry)
+                    if not remove_empties:
+                        slot_entry_set.add(slot_entry)
+                        current_slot.add_slot_entry(slot_entry)
+                else:
+                    slot_entry_set.add(slot_entry)
+                    current_slot.add_slot_entry(slot_entry)
 
 
 def write_new_file():
-    timestamp = time.time()
-    date = datetime.datetime.fromtimestamp(timestamp).strftime('%m_%d_%H_%M')
-    shutil.copyfile(char_slot_file, f'{char_slot_directory}\\XV2P_SLOTS_backup_{date}.x2s')
+    if not os.path.exists(char_slot_backup_directory):
+        os.makedirs(char_slot_backup_directory)
+    shutil.copyfile(char_slot_file, f'{char_slot_backup_directory}\\XV2P_SLOTS_backup_{get_datetime()}.x2s')
 
     with open(char_slot_file, 'w') as file:
-        slot_strings = []
         for slot in write_slots_list:
             if isinstance(slot, Slot):
                 file.write(f'{slot.write_string()}')
 
 
-def remove_duplicates():
+def remove_duplicates(remove_empties):
     with open(char_slot_file, 'r') as file:
         while True:
             char = file.read(1)
@@ -136,24 +141,30 @@ def remove_duplicates():
             if not char:
                 break
             if char == '{':
-                slot = read_slot_entries(file)
+                slot = read_slot_entries(file, remove_empties)
                 if not slot.is_empty():
                     write_slots_list.append(slot)
 
 
-def show_results():
-    print(f'Found {len(dupe_list)} duplicates:')
-    for dupe in dupe_list:
-        print(dupe)
+def show_results(show_dupes, show_empties, show_slots):
+    if show_dupes:
+        print(f'Found {len(dupe_list)} duplicates:')
+        for dupe in dupe_list:
+            print(dupe)
 
-    print()
+    if show_empties:
+        print(f'Found {len(empty_char_list)} empty entries:')
+        for empty in empty_char_list:
+            print(empty)
 
-    print('All Slots: ')
-    for slot in write_slots_list:
-        print(slot.write_string())
+    if show_slots:
+        print('All Slots: ')
+        for slot in write_slots_list:
+            print(slot.write_string())
 
 
 if __name__ == '__main__':
-    remove_duplicates()
+    populate_installed_chars()
+    remove_duplicates(True)
     write_new_file()
-    show_results()
+    show_results(True, True, False)
