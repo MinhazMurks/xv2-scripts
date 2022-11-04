@@ -1,4 +1,5 @@
 import datetime
+import logging
 import time
 
 char_dir = 'A:\\SteamLibrary\\steamapps\\common\\DB Xenoverse 2\\data\chara'
@@ -25,3 +26,10 @@ empty_char_list = []
 def get_datetime():
     timestamp = time.time()
     return datetime.datetime.fromtimestamp(timestamp).strftime('%m_%d_%H_%M')
+
+def setup_logger():
+    logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
+    logging.debug('This message should appear on the console')
+    logging.info('So should this')
+    logging.warning('And this, too')
+    return logging.getLogger()
